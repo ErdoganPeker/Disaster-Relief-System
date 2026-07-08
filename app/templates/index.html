@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Disaster Relief System</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#050508;color:#e2e8f0;font-family:system-ui,sans-serif;min-height:100vh;padding:2rem}
+.container{max-width:760px;margin:0 auto}
+.badge{display:inline-block;background:#ef444415;border:1px solid #ef444433;color:#ef4444;border-radius:999px;padding:.25rem .75rem;font-size:.75rem;margin-bottom:1rem}
+h1{font-size:1.75rem;font-weight:800;margin-bottom:.4rem;background:linear-gradient(135deg,#ef4444,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sub{color:#64748b;font-size:.875rem;margin-bottom:1.5rem}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:1.5rem}
+.stat{border-radius:10px;padding:.75rem;text-align:center}
+.stat.total{background:#13131f;border:1px solid #1e1e35}
+.stat.safe{background:#10b98115;border:1px solid #10b98133}
+.stat.injured{background:#f59e0b15;border:1px solid #f59e0b33}
+.stat.missing{background:#ef444415;border:1px solid #ef444433}
+.stat-val{font-size:1.5rem;font-weight:800}
+.stat.safe .stat-val{color:#10b981}
+.stat.injured .stat-val{color:#f59e0b}
+.stat.missing .stat-val{color:#ef4444}
+.stat.total .stat-val{color:#00d4ff}
+.stat-lbl{font-size:.7rem;color:#64748b;margin-top:.2rem}
+.search-bar{width:100%;background:#13131f;border:1px solid #1e1e35;border-radius:8px;padding:.7rem 1rem;color:#e2e8f0;font-size:.875rem;outline:none;margin-bottom:1rem}
+.victim-card{background:#13131f;border:1px solid #1e1e35;border-radius:10px;padding:.9rem;margin-bottom:.6rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem}
+.v-name{font-weight:700}
+.v-meta{font-size:.8rem;color:#64748b}
+.status-badge{padding:.2rem .6rem;border-radius:999px;font-size:.75rem;font-weight:700}
+.Safe{background:#10b98120;color:#10b981;border:1px solid #10b98140}
+.Injured{background:#f59e0b20;color:#f59e0b;border:1px solid #f59e0b40}
+.Missing{background:#ef444420;color:#ef4444;border:1px solid #ef444440}
+.form-card{background:#13131f;border:1px solid #1e1e35;border-radius:12px;padding:1.25rem;margin-top:1.5rem}
+h2{font-size:1rem;font-weight:700;margin-bottom:1rem;color:#94a3b8}
+label{display:block;font-size:.75rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.3rem;margin-top:.6rem}
+input,select{width:100%;background:#0e0e16;border:1px solid #1e1e35;border-radius:8px;padding:.6rem .8rem;color:#e2e8f0;font-size:.875rem;outline:none}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+button{margin-top:1rem;padding:.75rem;background:#ef4444;color:#fff;font-weight:700;border:none;border-radius:8px;cursor:pointer;width:100%}
+</style>
+</head>
+<body>
+<div class="container">
+  <span class="badge">🆘 Emergency System</span>
+  <h1>Disaster Relief System</h1>
+  <p class="sub">Victim registration, tracking, and search coordination for disaster response.</p>
+  <div class="stats">
+    <div class="stat total"><div class="stat-val">{{stats.total}}</div><div class="stat-lbl">Total</div></div>
+    <div class="stat safe"><div class="stat-val">{{stats.safe}}</div><div class="stat-lbl">Safe</div></div>
+    <div class="stat injured"><div class="stat-val">{{stats.injured}}</div><div class="stat-lbl">Injured</div></div>
+    <div class="stat missing"><div class="stat-val">{{stats.missing}}</div><div class="stat-lbl">Missing</div></div>
+  </div>
+  <input class="search-bar" type="text" placeholder="🔍 Search by name or location..." oninput="searchVictims(this.value)">
+  <div id="victims-list">
+    {% for v in victims %}
+    <div class="victim-card">
+      <div><div class="v-name">{{v.name}} ({{v.age}})</div><div class="v-meta">📍 {{v.location}} &nbsp;|&nbsp; Needs: {{v.needs}}</div></div>
+      <span class="status-badge {{v.status}}">{{v.status}}</span>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="form-card">
+    <h2>➕ Register New Victim</h2>
+    <div class="grid2">
+      <div><label>Name</label><input id="vname" value="Zeynep Arslan"></div>
+      <div><label>Age</label><input id="vage" type="number" value="29"></div>
+    </div>
+    <div class="grid2">
+      <div><label>Location</label><input id="vloc" value="Ataşehir"></div>
+      <div><label>Needs</label><input id="vneeds" value="Food"></div>
+    </div>
+    <label>Status</label>
+    <select id="vstatus"><option>Safe</option><option>Injured</option><option>Missing</option></select>
+    <button onclick="register()">Register Victim</button>
+  </div>
+</div>
+<script>
+async function searchVictims(q){
+  const r=await fetch('/search?q='+encodeURIComponent(q));
+  const victims=await r.json();
+  document.getElementById('victims-list').innerHTML=victims.map(v=>`<div class="victim-card"><div><div class="v-name">${v.name} (${v.age})</div><div class="v-meta">📍 ${v.location} | Needs: ${v.needs}</div></div><span class="status-badge ${v.status}">${v.status}</span></div>`).join('');
+}
+async function register(){
+  const r=await fetch('/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:document.getElementById('vname').value,age:+document.getElementById('vage').value,location:document.getElementById('vloc').value,status:document.getElementById('vstatus').value,needs:document.getElementById('vneeds').value})});
+  const j=await r.json();
+  if(j.success)location.reload();
+}
+</script>
+</body>
+</html>
