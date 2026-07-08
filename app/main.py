@@ -2,10 +2,11 @@ from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
-import uvicorn
+import uvicorn, os
 
 app = FastAPI()
-templates = Jinja2Templates(directory="templates")
+_dir = os.path.dirname(os.path.abspath(__file__))
+templates = Jinja2Templates(directory=os.path.join(_dir, "templates"))
 
 victims = [
     {"id":1,"name":"Ahmet Yılmaz","age":34,"location":"Kadıköy","status":"Safe","needs":"Food"},
