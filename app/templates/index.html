@@ -1,89 +1,380 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>Disaster Relief System</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Afet Koordinasyon Merkezi</title>
 <style>
+:root{
+  --bg:#f4f5f9; --bg2:#ffffff; --card:#ffffff; --border:#e2e4ec; --text:#1a1d29; --sub:#6b7080;
+  --accent:#e11d2e; --accent2:#f59e0b; --input:#f8f9fc;
+  --critical:#e11d2e; --high:#f59e0b; --medium:#3b82f6; --low:#10b981;
+  --safe:#10b981; --injured:#f59e0b; --missing:#e11d2e;
+  --shadow:0 1px 3px rgba(20,22,35,.06), 0 1px 2px rgba(20,22,35,.04);
+}
+:root[data-theme="dark"]{
+  --bg:#0a0b10; --bg2:#12131c; --card:#14151f; --border:#23253355; --text:#e7e9f2; --sub:#8a8fa3;
+  --input:#0e0f17;
+  --shadow:0 1px 3px rgba(0,0,0,.4), 0 1px 2px rgba(0,0,0,.3);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0a0b10; --bg2:#12131c; --card:#14151f; --border:#23253355; --text:#e7e9f2; --sub:#8a8fa3;
+    --input:#0e0f17;
+    --shadow:0 1px 3px rgba(0,0,0,.4), 0 1px 2px rgba(0,0,0,.3);
+  }
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#050508;color:#e2e8f0;font-family:system-ui,sans-serif;min-height:100vh;padding:2rem}
-.container{max-width:760px;margin:0 auto}
-.badge{display:inline-block;background:#ef444415;border:1px solid #ef444433;color:#ef4444;border-radius:999px;padding:.25rem .75rem;font-size:.75rem;margin-bottom:1rem}
-h1{font-size:1.75rem;font-weight:800;margin-bottom:.4rem;background:linear-gradient(135deg,#ef4444,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.sub{color:#64748b;font-size:.875rem;margin-bottom:1.5rem}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:1.5rem}
-.stat{border-radius:10px;padding:.75rem;text-align:center}
-.stat.total{background:#13131f;border:1px solid #1e1e35}
-.stat.safe{background:#10b98115;border:1px solid #10b98133}
-.stat.injured{background:#f59e0b15;border:1px solid #f59e0b33}
-.stat.missing{background:#ef444415;border:1px solid #ef444433}
-.stat-val{font-size:1.5rem;font-weight:800}
-.stat.safe .stat-val{color:#10b981}
-.stat.injured .stat-val{color:#f59e0b}
-.stat.missing .stat-val{color:#ef4444}
-.stat.total .stat-val{color:#00d4ff}
-.stat-lbl{font-size:.7rem;color:#64748b;margin-top:.2rem}
-.search-bar{width:100%;background:#13131f;border:1px solid #1e1e35;border-radius:8px;padding:.7rem 1rem;color:#e2e8f0;font-size:.875rem;outline:none;margin-bottom:1rem}
-.victim-card{background:#13131f;border:1px solid #1e1e35;border-radius:10px;padding:.9rem;margin-bottom:.6rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem}
-.v-name{font-weight:700}
-.v-meta{font-size:.8rem;color:#64748b}
-.status-badge{padding:.2rem .6rem;border-radius:999px;font-size:.75rem;font-weight:700}
-.Safe{background:#10b98120;color:#10b981;border:1px solid #10b98140}
-.Injured{background:#f59e0b20;color:#f59e0b;border:1px solid #f59e0b40}
-.Missing{background:#ef444420;color:#ef4444;border:1px solid #ef444440}
-.form-card{background:#13131f;border:1px solid #1e1e35;border-radius:12px;padding:1.25rem;margin-top:1.5rem}
-h2{font-size:1rem;font-weight:700;margin-bottom:1rem;color:#94a3b8}
-label{display:block;font-size:.75rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.3rem;margin-top:.6rem}
-input,select{width:100%;background:#0e0e16;border:1px solid #1e1e35;border-radius:8px;padding:.6rem .8rem;color:#e2e8f0;font-size:.875rem;outline:none}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh;transition:background .2s,color .2s}
+.wrap{max-width:1180px;margin:0 auto;padding:1.5rem 1.25rem 4rem}
+
+/* header */
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.1rem;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:.7rem}
+.brand-icon{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}
+h1{font-size:1.35rem;font-weight:800;letter-spacing:-.01em}
+.sub{color:var(--sub);font-size:.78rem;margin-top:.1rem}
+.live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--low);margin-right:.35rem;box-shadow:0 0 0 3px #10b98122;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.theme-btn{background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:.55rem .8rem;cursor:pointer;font-size:1rem;box-shadow:var(--shadow)}
+
+/* critical banner */
+.banner{display:none;align-items:center;gap:.6rem;background:linear-gradient(90deg,#e11d2e,#f59e0b);color:#fff;border-radius:12px;padding:.85rem 1.1rem;margin-bottom:1.1rem;font-weight:700;font-size:.88rem;box-shadow:0 4px 14px #e11d2e33;animation:pulseglow 2s infinite}
+.banner.show{display:flex}
+@keyframes pulseglow{0%,100%{box-shadow:0 4px 14px #e11d2e33}50%{box-shadow:0 4px 22px #e11d2e66}}
+
+/* stat cards */
+.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:.65rem;margin-bottom:1.1rem}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:.85rem .7rem;text-align:center;box-shadow:var(--shadow)}
+.stat-val{font-size:1.4rem;font-weight:800;line-height:1}
+.stat-lbl{font-size:.66rem;color:var(--sub);margin-top:.3rem;text-transform:uppercase;letter-spacing:.04em}
+.stat.total .stat-val{color:#3b82f6}
+.stat.safe .stat-val{color:var(--safe)}
+.stat.injured .stat-val{color:var(--injured)}
+.stat.missing .stat-val{color:var(--missing)}
+.stat.critical .stat-val{color:var(--critical)}
+.stat.age .stat-val{color:#8b5cf6}
+
+/* section layout */
+.row2{display:grid;grid-template-columns:1.3fr 1fr;gap:1rem;margin-bottom:1.1rem}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem 1.1rem;box-shadow:var(--shadow)}
+.panel h3{font-size:.85rem;font-weight:800;margin-bottom:.8rem;display:flex;align-items:center;gap:.4rem;color:var(--text)}
+
+/* resources */
+.res-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem}
+.res-card{background:var(--input);border:1px solid var(--border);border-radius:10px;padding:.6rem .7rem}
+.res-top{display:flex;justify-content:space-between;align-items:center;font-size:.78rem;font-weight:700;margin-bottom:.35rem}
+.res-num{font-size:.68rem;color:var(--sub);font-weight:600}
+.res-bar{height:7px;border-radius:99px;background:var(--border);overflow:hidden}
+.res-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#3b82f6,#8b5cf6);transition:width .3s}
+.res-bar-fill.warn{background:linear-gradient(90deg,#f59e0b,#e11d2e)}
+
+/* location distribution */
+.loc-row{display:flex;align-items:center;gap:.6rem;margin-bottom:.55rem;font-size:.78rem}
+.loc-name{width:88px;flex-shrink:0;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.loc-track{flex:1;height:16px;background:var(--input);border-radius:6px;overflow:hidden;border:1px solid var(--border)}
+.loc-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:6px;transition:width .3s;display:flex;align-items:center}
+.loc-count{width:22px;text-align:right;font-weight:700;font-size:.75rem;flex-shrink:0}
+
+/* filters */
+.filters{display:flex;gap:.6rem;margin-bottom:.9rem;flex-wrap:wrap}
+.filters input[type=text]{flex:1;min-width:180px}
+.filters select{width:auto;min-width:130px}
+input,select{background:var(--input);border:1px solid var(--border);border-radius:9px;padding:.6rem .8rem;color:var(--text);font-size:.82rem;outline:none;width:100%}
+input:focus,select:focus{border-color:var(--accent)}
+
+/* victim cards */
+.vgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:.7rem;margin-bottom:1.3rem}
+.vcard{background:var(--card);border:1px solid var(--border);border-left:5px solid var(--low);border-radius:12px;padding:.85rem .95rem;box-shadow:var(--shadow)}
+.vcard.p-critical{border-left-color:var(--critical)}
+.vcard.p-high{border-left-color:var(--high)}
+.vcard.p-medium{border-left-color:var(--medium)}
+.vcard.p-low{border-left-color:var(--low)}
+.vhead{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;margin-bottom:.4rem}
+.vname{font-weight:800;font-size:.95rem}
+.vage{color:var(--sub);font-weight:500;font-size:.8rem}
+.badges{display:flex;gap:.35rem;flex-shrink:0}
+.badge{padding:.15rem .55rem;border-radius:999px;font-size:.66rem;font-weight:800;white-space:nowrap}
+.badge.pri-critical{background:#e11d2e20;color:var(--critical)}
+.badge.pri-high{background:#f59e0b20;color:var(--high)}
+.badge.pri-medium{background:#3b82f620;color:var(--medium)}
+.badge.pri-low{background:#10b98120;color:var(--low)}
+.badge.st-Safe{background:#10b98120;color:var(--safe)}
+.badge.st-Injured{background:#f59e0b20;color:var(--injured)}
+.badge.st-Missing{background:#e11d2e20;color:var(--missing)}
+.vmeta{font-size:.76rem;color:var(--sub);margin-bottom:.55rem;display:flex;flex-wrap:wrap;gap:.5rem}
+.chips{display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.55rem}
+.chip{background:var(--input);border:1px solid var(--border);border-radius:6px;padding:.15rem .45rem;font-size:.68rem;color:var(--sub)}
+.vactions{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;border-top:1px dashed var(--border);padding-top:.55rem}
+.vactions select,.vactions input{width:auto;padding:.4rem .5rem;font-size:.72rem}
+.vactions .amt{width:56px}
+.btn{border:none;border-radius:7px;padding:.4rem .65rem;font-size:.72rem;font-weight:700;cursor:pointer;color:#fff}
+.btn.upd{background:#3b82f6}
+.btn.alloc{background:var(--low)}
+.btn.del{background:var(--critical)}
+.btn:hover{filter:brightness(1.08)}
+.empty{color:var(--sub);font-size:.85rem;text-align:center;padding:1.5rem;grid-column:1/-1}
+
+/* form */
+.form-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.1rem 1.2rem;box-shadow:var(--shadow)}
+label{display:block;font-size:.68rem;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.25rem;margin-top:.6rem;font-weight:700}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
-button{margin-top:1rem;padding:.75rem;background:#ef4444;color:#fff;font-weight:700;border:none;border-radius:8px;cursor:pointer;width:100%}
+.reg-btn{margin-top:1rem;padding:.75rem;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:800;border:none;border-radius:9px;cursor:pointer;width:100%;font-size:.85rem}
+.reg-btn:hover{filter:brightness(1.05)}
+.toast{position:fixed;bottom:1.2rem;right:1.2rem;background:var(--card);border:1px solid var(--border);color:var(--text);padding:.7rem 1rem;border-radius:10px;box-shadow:var(--shadow);font-size:.8rem;font-weight:600;opacity:0;transform:translateY(10px);transition:.25s;pointer-events:none;z-index:50}
+.toast.show{opacity:1;transform:translateY(0)}
+
+@media(max-width:860px){
+  .stats{grid-template-columns:repeat(3,1fr)}
+  .row2{grid-template-columns:1fr}
+  .vgrid{grid-template-columns:1fr}
+  .res-grid{grid-template-columns:1fr 1fr}
+}
 </style>
 </head>
 <body>
-<div class="container">
-  <span class="badge">🆘 Emergency System</span>
-  <h1>Disaster Relief System</h1>
-  <p class="sub">Victim registration, tracking, and search coordination for disaster response.</p>
-  <div class="stats">
-    <div class="stat total"><div class="stat-val">{{stats.total}}</div><div class="stat-lbl">Total</div></div>
-    <div class="stat safe"><div class="stat-val">{{stats.safe}}</div><div class="stat-lbl">Safe</div></div>
-    <div class="stat injured"><div class="stat-val">{{stats.injured}}</div><div class="stat-lbl">Injured</div></div>
-    <div class="stat missing"><div class="stat-val">{{stats.missing}}</div><div class="stat-lbl">Missing</div></div>
-  </div>
-  <input class="search-bar" type="text" placeholder="🔍 Search by name or location..." oninput="searchVictims(this.value)">
-  <div id="victims-list">
-    {% for v in victims %}
-    <div class="victim-card">
-      <div><div class="v-name">{{v.name}} ({{v.age}})</div><div class="v-meta">📍 {{v.location}} &nbsp;|&nbsp; Needs: {{v.needs}}</div></div>
-      <span class="status-badge {{v.status}}">{{v.status}}</span>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-icon">🆘</div>
+      <div>
+        <h1>Afet Koordinasyon Merkezi</h1>
+        <div class="sub"><span class="live-dot"></span>Canlı takip — kurban kaydı, önceliklendirme &amp; kaynak dağıtımı</div>
+      </div>
     </div>
-    {% endfor %}
+    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">🌙</button>
   </div>
+
+  <div class="banner" id="criticalBanner">🚨 <span id="bannerText"></span></div>
+
+  <div class="stats" id="statsGrid"></div>
+
+  <div class="row2">
+    <div class="panel">
+      <h3>📊 Lokasyon Dağılımı</h3>
+      <div id="locList"></div>
+    </div>
+    <div class="panel">
+      <h3>📦 Kaynak Envanteri</h3>
+      <div class="res-grid" id="resGrid"></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-bottom:1.1rem">
+    <h3>🧍 Kurban Listesi</h3>
+    <div class="filters">
+      <input type="text" id="searchBox" placeholder="🔍 İsim veya lokasyona göre ara..." oninput="onFilterChange()">
+      <select id="statusFilter" onchange="onFilterChange()">
+        <option value="">Tüm Durumlar</option>
+        <option value="Safe">Güvende</option>
+        <option value="Injured">Yaralı</option>
+        <option value="Missing">Kayıp</option>
+      </select>
+      <select id="priorityFilter" onchange="onFilterChange()">
+        <option value="">Tüm Öncelikler</option>
+        <option value="Critical">Kritik</option>
+        <option value="High">Yüksek</option>
+        <option value="Medium">Orta</option>
+        <option value="Low">Düşük</option>
+      </select>
+    </div>
+    <div class="vgrid" id="victimsList"></div>
+  </div>
+
   <div class="form-card">
-    <h2>➕ Register New Victim</h2>
+    <h2 style="font-size:.95rem;font-weight:800;margin-bottom:.3rem">➕ Yeni Kurban Kaydı</h2>
     <div class="grid2">
-      <div><label>Name</label><input id="vname" value="Zeynep Arslan"></div>
-      <div><label>Age</label><input id="vage" type="number" value="29"></div>
+      <div><label>Ad Soyad</label><input id="vname" placeholder="Zeynep Arslan"></div>
+      <div><label>Yaş</label><input id="vage" type="number" value="29"></div>
     </div>
     <div class="grid2">
-      <div><label>Location</label><input id="vloc" value="Ataşehir"></div>
-      <div><label>Needs</label><input id="vneeds" value="Food"></div>
+      <div><label>Lokasyon</label><input id="vloc" placeholder="Ataşehir"></div>
+      <div><label>İhtiyaç</label>
+        <select id="vneeds">
+          <option value="Food">Gıda</option>
+          <option value="Medical">Tıbbi</option>
+          <option value="Shelter">Barınma</option>
+          <option value="Water">Su</option>
+          <option value="Search">Arama-Kurtarma</option>
+        </select>
+      </div>
     </div>
-    <label>Status</label>
-    <select id="vstatus"><option>Safe</option><option>Injured</option><option>Missing</option></select>
-    <button onclick="register()">Register Victim</button>
+    <label>Durum</label>
+    <select id="vstatus"><option value="Safe">Güvende</option><option value="Injured">Yaralı</option><option value="Missing">Kayıp</option></select>
+    <button class="reg-btn" onclick="registerVictim()">Kurban Kaydet</button>
   </div>
+
 </div>
+<div class="toast" id="toast"></div>
+
 <script>
-async function searchVictims(q){
-  const r=await fetch('/search?q='+encodeURIComponent(q));
-  const victims=await r.json();
-  document.getElementById('victims-list').innerHTML=victims.map(v=>`<div class="victim-card"><div><div class="v-name">${v.name} (${v.age})</div><div class="v-meta">📍 ${v.location} | Needs: ${v.needs}</div></div><span class="status-badge ${v.status}">${v.status}</span></div>`).join('');
+const STATUS_TR = {Safe:"Güvende", Injured:"Yaralı", Missing:"Kayıp"};
+const PRI_TR = {Critical:"Kritik", High:"Yüksek", Medium:"Orta", Low:"Düşük"};
+const RES_TR = {food:"Gıda", medical:"Tıbbi", shelter:"Barınma", water:"Su"};
+let state = { victims: [], stats: {} };
+
+function toggleTheme(){
+  const root = document.documentElement;
+  const cur = root.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark':'light');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  root.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+  document.getElementById('themeBtn').textContent = next === 'dark' ? '☀️' : '🌙';
 }
-async function register(){
-  const r=await fetch('/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:document.getElementById('vname').value,age:+document.getElementById('vage').value,location:document.getElementById('vloc').value,status:document.getElementById('vstatus').value,needs:document.getElementById('vneeds').value})});
-  const j=await r.json();
-  if(j.success)location.reload();
+(function initTheme(){
+  const saved = localStorage.getItem('theme');
+  if(saved){ document.documentElement.setAttribute('data-theme', saved); }
+  const isDark = saved ? saved==='dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  document.addEventListener('DOMContentLoaded', ()=> document.getElementById('themeBtn').textContent = isDark ? '☀️':'🌙');
+})();
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), 2400);
 }
+
+async function loadAll(){
+  const [vs, st] = await Promise.all([
+    fetch('/victims').then(r=>r.json()),
+    fetch('/stats').then(r=>r.json())
+  ]);
+  state.victims = vs; state.stats = st;
+  renderStats(); renderBanner(); renderLocations(); renderResources(); renderVictims();
+}
+
+function renderBanner(){
+  const c = state.stats.critical_count || 0;
+  const b = document.getElementById('criticalBanner');
+  if(c > 0){
+    document.getElementById('bannerText').textContent = `${c} kişi KRİTİK durumda — acil müdahale gerekiyor!`;
+    b.classList.add('show');
+  } else { b.classList.remove('show'); }
+}
+
+function renderStats(){
+  const s = state.stats;
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat total"><div class="stat-val">${s.total}</div><div class="stat-lbl">Toplam</div></div>
+    <div class="stat safe"><div class="stat-val">${s.safe}</div><div class="stat-lbl">Güvende</div></div>
+    <div class="stat injured"><div class="stat-val">${s.injured}</div><div class="stat-lbl">Yaralı</div></div>
+    <div class="stat missing"><div class="stat-val">${s.missing}</div><div class="stat-lbl">Kayıp</div></div>
+    <div class="stat critical"><div class="stat-val">${s.critical_count}</div><div class="stat-lbl">Kritik</div></div>
+    <div class="stat age"><div class="stat-val">${s.avg_age}</div><div class="stat-lbl">Ort. Yaş</div></div>
+  `;
+}
+
+function renderLocations(){
+  const loc = state.stats.by_location || {};
+  const entries = Object.entries(loc).sort((a,b)=>b[1]-a[1]);
+  const max = entries.length ? entries[0][1] : 1;
+  document.getElementById('locList').innerHTML = entries.length ? entries.map(([name,count])=>`
+    <div class="loc-row">
+      <div class="loc-name" title="${name}">${name}</div>
+      <div class="loc-track"><div class="loc-fill" style="width:${(count/max*100).toFixed(0)}%"></div></div>
+      <div class="loc-count">${count}</div>
+    </div>`).join('') : '<div class="empty">Henüz kayıt yok</div>';
+}
+
+function renderResources(){
+  const res = state.stats.resources || {};
+  document.getElementById('resGrid').innerHTML = Object.entries(res).map(([key,r])=>`
+    <div class="res-card">
+      <div class="res-top"><span>${r.icon} ${r.label}</span><span class="res-num">${r.remaining}/${r.total} ${r.unit}</span></div>
+      <div class="res-bar"><div class="res-bar-fill ${r.pct_used>75?'warn':''}" style="width:${r.pct_used}%"></div></div>
+    </div>`).join('');
+}
+
+function matchesFilters(v){
+  const q = document.getElementById('searchBox').value.trim().toLowerCase();
+  const st = document.getElementById('statusFilter').value;
+  const pr = document.getElementById('priorityFilter').value;
+  if(q && !(v.name.toLowerCase().includes(q) || v.location.toLowerCase().includes(q))) return false;
+  if(st && v.status !== st) return false;
+  if(pr && v.priority !== pr) return false;
+  return true;
+}
+function onFilterChange(){ renderVictims(); }
+
+function renderVictims(){
+  const list = state.victims.filter(matchesFilters);
+  const el = document.getElementById('victimsList');
+  if(!list.length){ el.innerHTML = '<div class="empty">Eşleşen kurban bulunamadı</div>'; return; }
+  el.innerHTML = list.map(v => {
+    const resChips = Object.entries(v.resources||{}).filter(([,n])=>n>0)
+      .map(([k,n])=>`<span class="chip">${RES_TR[k]||k}: ${n}</span>`).join('');
+    const resOptions = Object.keys(state.stats.resources||{'food':1,'medical':1,'shelter':1,'water':1})
+      .map(k=>`<option value="${k}" ${v.suggested_resource===k?'selected':''}>${RES_TR[k]||k}</option>`).join('');
+    return `
+    <div class="vcard p-${v.priority.toLowerCase()}">
+      <div class="vhead">
+        <div><span class="vname">${v.name}</span> <span class="vage">(${v.age})</span></div>
+        <div class="badges">
+          <span class="badge pri-${v.priority.toLowerCase()}">${PRI_TR[v.priority]||v.priority}</span>
+          <span class="badge st-${v.status}">${STATUS_TR[v.status]||v.status}</span>
+        </div>
+      </div>
+      <div class="vmeta"><span>📍 ${v.location}</span><span>🎯 İhtiyaç: ${v.needs}</span></div>
+      ${resChips ? `<div class="chips">${resChips}</div>` : ''}
+      <div class="vactions">
+        <select id="st-${v.id}">
+          <option value="Safe" ${v.status==='Safe'?'selected':''}>Güvende</option>
+          <option value="Injured" ${v.status==='Injured'?'selected':''}>Yaralı</option>
+          <option value="Missing" ${v.status==='Missing'?'selected':''}>Kayıp</option>
+        </select>
+        <button class="btn upd" onclick="updateStatus(${v.id})">Güncelle</button>
+        <select id="rt-${v.id}">${resOptions}</select>
+        <input class="amt" id="ra-${v.id}" type="number" value="1" min="1">
+        <button class="btn alloc" onclick="allocate(${v.id})">Ata</button>
+        <button class="btn del" onclick="removeVictim(${v.id})">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function updateStatus(id){
+  const status = document.getElementById('st-'+id).value;
+  const r = await fetch('/victims/'+id, {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({status})});
+  const j = await r.json();
+  if(j.success){ showToast('Durum güncellendi'); loadAll(); } else { showToast(j.detail || 'Hata'); }
+}
+
+async function allocate(id){
+  const type = document.getElementById('rt-'+id).value;
+  const amount = +document.getElementById('ra-'+id).value || 1;
+  const r = await fetch(`/resources/${type}/allocate`, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({victim_id:id, amount})});
+  const j = await r.json();
+  if(j.success){ showToast('Kaynak atandı'); loadAll(); } else { showToast(j.detail || 'Yetersiz stok'); }
+}
+
+async function removeVictim(id){
+  if(!confirm('Bu kaydı silmek istediğinize emin misiniz?')) return;
+  const r = await fetch('/victims/'+id, {method:'DELETE'});
+  const j = await r.json();
+  if(j.success){ showToast('Kayıt silindi'); loadAll(); }
+}
+
+async function registerVictim(){
+  const name = document.getElementById('vname').value.trim();
+  const loc = document.getElementById('vloc').value.trim();
+  if(!name || !loc){ showToast('İsim ve lokasyon zorunlu'); return; }
+  const body = {
+    name, age: +document.getElementById('vage').value,
+    location: loc, status: document.getElementById('vstatus').value,
+    needs: document.getElementById('vneeds').value
+  };
+  const r = await fetch('/register', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+  const j = await r.json();
+  if(j.success){
+    showToast('Kurban kaydedildi');
+    document.getElementById('vname').value=''; document.getElementById('vloc').value=''; document.getElementById('vage').value=29;
+    loadAll();
+  }
+}
+
+loadAll();
 </script>
 </body>
 </html>
